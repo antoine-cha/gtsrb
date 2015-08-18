@@ -5,7 +5,7 @@ require 'cutorch'
 local learn = require 'learn'
 
 -- training parameters
-local filename = 'model.t7'
+local filename = 'model-mom2.t7'
 local dataPath = './dataset-43c-allex.t7'
 local train_params = {
       network_file = '',
@@ -16,7 +16,7 @@ local train_params = {
       learningRate = 2e-3,
       learningRateDecay = 1e-4,
       weightDecay = 0,
-      momentum = 0.1
+      momentum = 0.2
 }
 
 local network = learn.createNetwork() 
@@ -32,6 +32,7 @@ else
   else
     mlp_:add(network)
   end
+end
 
 print(train_params)
 --print(sgd_params)
