@@ -168,6 +168,9 @@ local function trainNetwork(network, dataset_file, params)
       end
       current_loss = current_loss / 100
       print(i ..'th iteration, current_loss :' .. current_loss)
+      if i % params.freq_save == 0 then 
+        torch.save(params.filename, network)
+      end
     end
   end
 end
