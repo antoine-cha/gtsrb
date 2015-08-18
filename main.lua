@@ -5,24 +5,26 @@ require 'cutorch'
 local learn = require 'learn'
 
 -- training parameters
-local filename = 'model-mom2.t7'
+local filename = 'model-mom2-l5-3.t7'
 local dataPath = './dataset-43c-allex.t7'
 local train_params = {
-      network_file = '',
+      filename = filename,
       batchSize = 128,
       only2classes = false,
       cudaOn = true,
-      nb_epochs = 1000,
-      learningRate = 2e-3,
+      nb_epochs = 10000,
+      freq_save = 50,
+      -- SGD parameters
+      learningRate = 5e-3,
       learningRateDecay = 1e-4,
       weightDecay = 0,
-      momentum = 0.2
+      momentum = 0.2,
 }
 
 local network = learn.createNetwork() 
 
 local mlp_ = nn.Sequential()
-if train_params.network_file ~= '' then
+if train_params.network_file then
   mlp_ = torch.load(network_file)
 else
   if train_params.cudaOn then
