@@ -48,6 +48,10 @@ function csvToTable(meta_file)
       x2=fields[6],
       y2=fields[7]
       }
+
+      if fields[8] then
+        meta_data[fields[1]].classId = tonumber(fields[8])
+      end
     end
   end
   return meta_data
@@ -164,34 +168,67 @@ function datasetFromClasses(origDir, ex_per_class, classes)
   return dataset, nb_classes, ex_per_class
 end
 
-----------------------------------------------------------------------------
-----------------------------------------------------------------------------
---metadata = GTSRB/csvToTable(data_path .. meta_file)
-local orig = './train/GTSRB/Final_Training/Images'
-local dest = './train/class_files'
-if not path.isdir(dest) then
-  dir.makepath(dest)
+
+function formatTestData(test_orig, size, meta_test)
+  -- get the test data in a correct dataset object
+  local dataset = {}
+  local metadata = csvToTable(meta_test)
+  for root, dirs, files in dir.walk(test_orig) do
+    local c_i = 1
+    for i, f in ipairs(files) do
+      local file_  = path.join(root, f)
+      local name_, ext = path.splitext(file_)
+      if ext == '.ppm' then
+        dataset[c_i] = {} 
+        local img = image.load(file_)
+        img = image.scale(img, size..'x'..size)
+        img = image.rgb2yuv(img)
+        dataset[c_i][1] = torch.Tensor(3, size, size):copy(img)
+        dataset[c_i][2] = metadata[f].classId
+        c_i = c_i + 1
+      end
+    end     
+  end
+  print(dataset[7])
+  return dataset 
 end
+----------------------------------------------------------------------------
+----------------------------------------------------------------------------
+local train_orig = './train/GTSRB/Final_Training/Images'
+local test_orig = './test/GTSRB/Final_Test/Images'
+
+local train_dest = './train/class_files'
+local test_dest = './test/test_data.t7'
+
+local meta_test = './gt/GT-final_test.csv'
 
 -- Extract data from files to Tensors
 extraction = true
 -- Create the dataset tensor file
-creation = true
-if extraction then
-  print('Extracting the images')
-  dataset = imagesToTensorFiles(orig, dest, 32)
+creation = false
+local set = 'test'
+
+if not path.isdir(train_dest) then
+  dir.makepath(train_dest)
 end
 
-if creation then
-  print('Creating a dataset file')
-  dataset, nb_classes, nb_examples = datasetFromClasses('./train/class_files')
-  local nb_ex
+print(set)
+if set == 'train'then
+  if extraction then
+    print('Extracting the images')
+    dataset = imagesToTensorFiles(train_orig, train_dest, size)
+  end
+  if creation then
+    print('Creating a dataset file')
+    dataset, nb_classes, nb_examples = datasetFromClasses(train_dest)
+    local nb_ex
   if nb_examples==math.huge then
     nb_ex = 'all'
   end
   torch.save('dataset-'.. nb_classes .. 'c-' .. nb_ex .. 'ex.t7', dataset)
+  end
+elseif set == 'test' then
+  local testdata = formatTestData(test_orig, 32, meta_test)
+  torch.save(test_dest, testdata)
 end
-
-
-
-
+   
