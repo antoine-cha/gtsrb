@@ -141,7 +141,7 @@ function datasetFromClasses(origDir, ex_per_class, classes)
   local classes = classes or comp 'x for x=1, 43' ()
   local nb_classes = #classes
   local ex_per_class = ex_per_class or math.huge
-  local dataset = {}
+  local dataset_ = {}
   local current_i = 1
 
   for i_c, c in ipairs(classes) do
@@ -158,13 +158,26 @@ function datasetFromClasses(origDir, ex_per_class, classes)
       if #ex == 0 then
         print(i .. '/' .. nb)
       end
-      dataset[current_i] = {}
-      dataset[current_i][1] = examples[i] 
-      dataset[current_i][2] = c
+      dataset_[current_i] = {}
+      dataset_[current_i][1] = examples[i] 
+      dataset_[current_i][2] = c
       current_i = current_i + 1 
     end
   end
-  shuffle(dataset)
+  shuffle(dataset_)
+  -- Transform dataset into 2 tensors to be sliced
+  local dataset = {}
+  dataset.data = torch.Tensor(#dataset_, dataset_[1][1]:size(1),
+                                         dataset_[1][1]:size(2),
+                                         dataset_[1][1]:size(3))
+  dataset.labels = torch.Tensor(#dataset_)
+  for i, c in ipairs(dataset_) do
+    dataset.data[{i,{}}] = c[1]
+    dataset.labels[i] = c[2]
+  end
+  print(dataset)
+
+
   return dataset, nb_classes, ex_per_class
 end
 
@@ -201,12 +214,14 @@ local train_dest = './train/class_files'
 local test_dest = './test/test_data.t7'
 
 local meta_test = './gt/GT-final_test.csv'
-
+----------------------------------------------------
+----------------------------------------------------
+local set = 'train'
 -- Extract data from files to Tensors
-extraction = true
+extraction = false
 -- Create the dataset tensor file
-creation = false
-local set = 'test'
+creation = true
+
 
 if not path.isdir(train_dest) then
   dir.makepath(train_dest)
