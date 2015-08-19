@@ -60,7 +60,7 @@ end
 
 local function imagesToTensorFiles(origDir, destDir, size)
   -- extract all the examples and write them per class
-  -- The t7 files will be written in the current dir
+  -- The t7 files will be written at destDir
   ------------------------------------
   -- origDir (string)
   --      relative path to the directory containing the image files
@@ -128,9 +128,9 @@ local function datasetFromClasses(origDir, ex_per_class, classes)
   -- Extract a given number of examples in the selected classes to create a dataset object.
   -- The dataset will be saved to a .t7 file. Examples are shuffled.
   ---------------------------------------------------
-  -- classes (table)
+  -- classes (table OPTIONAL)
   --      array of the selected classes
-  -- ex_per_class (int)
+  -- ex_per_class (int OPTIONAL)
   --      number of examples to be extracted from each class
   -- origDir (string)
   --      path to the directory containing the examples as tensors, 1 file per class
