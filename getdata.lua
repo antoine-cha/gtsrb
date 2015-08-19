@@ -7,7 +7,9 @@ local args = lapp [[
     -s, --set (default "test")  Set to be processed
     -e, --extraction  (default true) extraction from ppm files ?
     -c, --creation (default true) creation of dataset from t7 files ?
-    -d, --destination (default nil) target directory to write
+    -d, --destination target directory to write
+    -a, --augment_factor (default 0) data augmentation factor
+    --size (default 32) size of the image 
        ]]
 
 local targets = {}
@@ -19,28 +21,31 @@ targets.meta_test = './gt/GT-final_test.csv'
 
 local set = args.set
 print(targets)
+print(args)
 
-if not path.isdir(train_dest) then
-  dir.makepath(train_dest)
+if not path.isdir(targets.train_dest) then
+  dir.makepath(targets.train_dest)
 end
 
 if set == 'train'then
   print('Working on train data')
   if args.extraction then
     print('Extracting the images')
-    dataset = data.imagesToTensorFiles(train_orig, train_dest, size)
+    dataset = data.imagesToTensorFiles(targets.train_orig, targets.train_dest,
+    args.size, args.augment_factor)
   end
   if args.creation then
     print('Creating a dataset file')
-    dataset, nb_classes, nb_examples = data.datasetFromClasses(train_dest)
+    dataset, nb_classes, nb_examples = data.datasetFromClasses(targets.train_dest)
     local nb_ex
   if nb_examples==math.huge then
     nb_ex = 'all'
   end
-  torch.save('dataset-'.. nb_classes .. 'c-' .. nb_ex .. 'ex.t7', dataset)
+  torch.save('dataset-'.. nb_classes .. 'c-' .. nb_ex .. 'ex-' 
+             .. args.augment_factor .. 'fa.t7', dataset)
   end
 elseif set == 'test' then
   print('Setting up test data')
-  local testdata = data.formatTestData(test_orig, 32, meta_test)
-  torch.save(test_dest, testdata)
+  local testdata = data.formatTestData(targets.test_orig, 32, targets.meta_test)
+  torch.save(targets.test_dest, testdata)
 end
