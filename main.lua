@@ -5,27 +5,27 @@ local dir = require 'pl.dir'
 
 -- training parameters
 local modelDir = './models/'
-if not path.isdir(modelDir) then
-  dir.makepath(modelDir)
-end
-
-local filename = 'model-mom2-l5-3.t7'
-local dataPath = './dataset-43c-allex.t7'
-
+local filename = 'model-.t7'
+local dataPath = './dataset-43c-allex-2fa.t7'
 local params = {
       filename = path.join(modelDir, filename),
       batchSize = 100,
       only2classes = false,
       cudaOn = true,
       nb_epochs = 10000,
-      freq_save = 100,
+      freq_save = 500,
       -- SGD parameters
-      learningRate = 1e-3,
+      learningRate = 1e-1,
       learningRateDecay = 1e-4,
-      weightDecay = 0,
+      weightDecay = 0.0005,
       momentum = 0.1,
+      dampening = 0.0,
+      nesterov = 1,
 }
 
+if not path.isdir(modelDir) then
+  dir.makepath(modelDir)
+end
 
 if path.exists(params.filename) then
   local name, ext = path.splitext(params.filename) 
