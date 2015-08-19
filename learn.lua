@@ -124,11 +124,11 @@ local function trainNetwork(network, dataset_file, params)
   f, df = network:getParameters()
   local base_size_ = dataset.data[1]:size()
   local targets = torch.CudaTensor(params.batchSize)
-  local inputs = torch.Tensor(params.batchSize, 
+  local inputs = torch.CudaTensor(params.batchSize, 
                 base_size_[1], base_size_[2], base_size_[3])
 
   local indices = torch.range(1,
-  dataset.data:size(1)):long():split(params.batchSize)
+      dataset.data:size(1)):long():split(params.batchSize)
   -- remove last so that all batches have same size
   indices[#indices] = nil
   local _ind_ = 1
@@ -150,8 +150,8 @@ local function trainNetwork(network, dataset_file, params)
     if _ind_ == #indices then _ind_ = 1 end
     batch = indices[_ind_]
 
-    local inputs = dataset.data:index(1, batch):cuda()
-    targets:copy(dataset.labels:index(1, batch)):cuda()
+    inputs:copy(dataset.data:index(1, batch))
+    targets:copy(dataset.labels:index(1, batch))
 
     if cudaOn then
       inputs:cuda()
@@ -174,11 +174,13 @@ local function trainNetwork(network, dataset_file, params)
     _, fs = optim.sgd(feval, f, params)
     local current_loss = fs[1] / params.batchSize
     conf:updateValids()
-    io.write((i ..'th iteration, Current loss :' .. 
-              ' %.6f // '):format(current_loss))
-    io.write(('Train accuracy: '..'%.2f \n'):format(
-            conf.totalValid * 100))
-    conf:zero()
+    if i%10 == 0 then
+      io.write(('%.2f ' ..'th epoch, Average loss :' .. 
+                ' %.6f // '):format(i/#indices, current_loss))
+      io.write(('Train acc: '..'%.2f \n'):format(
+              conf.totalValid * 100))
+      conf:zero()
+    end
     if i % params.freq_save == 0 then 
       torch.save(params.filename, network)
       print('Model saved at ' .. params.filename)
