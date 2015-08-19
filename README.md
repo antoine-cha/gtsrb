@@ -57,8 +57,8 @@ Trains a network given as arg.
 * The network is saved every <params.freq_save> epochs
 
 ## main.lua 
-Setup the experiment, and launch using learn.lua's functions.
-The models are saved at ./models/
-It will create a new file for every experiment.
+Setup the experiment, and launch using learn.lua's functions.  
+The models are saved at ./models/  
+It will create a new file for every experiment.  
 Can't retrain an existing network for now.
 
