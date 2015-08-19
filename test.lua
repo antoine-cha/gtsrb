@@ -26,9 +26,9 @@ function show_conf(network, dataset_file, batchSize)
                 base_size_[1], base_size_[2], base_size_[3])
   network = network:cuda()
 
-  for i=1, 10 do
-    sys.sleep(0.5)
-    samples = dataset.data:index(1,indices[i]):cuda()
+  for i=1, #indices do
+    --sys.sleep(0.5)
+    samples:copy(dataset.data:index(1,indices[i]))
     preds = network:forward(samples)
     targets:copy(dataset.labels:index(1, indices[i]))
     conf:batchAdd(preds, targets)
