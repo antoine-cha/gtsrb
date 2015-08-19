@@ -9,7 +9,7 @@ local filename = 'model-mom2-l5-3.t7'
 local dataPath = './dataset-43c-allex.t7'
 local train_params = {
       filename = filename,
-      batchSize = 128,
+      batchSize = 100,
       only2classes = false,
       cudaOn = true,
       nb_epochs = 10000,
@@ -27,13 +27,7 @@ local mlp_ = nn.Sequential()
 if train_params.network_file then
   mlp_ = torch.load(network_file)
 else
-  if train_params.cudaOn then
-    mlp_:add(nn.Copy('torch.FloatTensor', 'torch.CudaTensor'))
-    mlp_:add(network)
-    mlp_:add(nn.Copy('torch.CudaTensor', 'torch.FloatTensor'))
-  else
-    mlp_:add(network)
-  end
+  mlp_:add(network)
 end
 
 print(train_params)
