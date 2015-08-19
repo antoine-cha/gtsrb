@@ -58,7 +58,7 @@ end
 
 
 
-local function imagesToTensorFiles(origDir, destDir, size)
+local function imagesToTensorFiles(origDir, destDir, size, augment_factor)
   -- extract all the examples and write them per class
   -- The t7 files will be written at destDir
   ------------------------------------
@@ -70,6 +70,7 @@ local function imagesToTensorFiles(origDir, destDir, size)
   --      the size to which the images are rescaled
 
   local size = size or 32
+  local augment_factor = augment_factor or 0
 
   for root, dirs, files in dir.walk(origDir) do
     -- Only check one level of recursion for now
@@ -110,10 +111,19 @@ local function imagesToTensorFiles(origDir, destDir, size)
         local name_, ext = path.splitext(file_)
         if ext == '.ppm' then
           local img = image.load(file_)
-          img = image.scale(img, size..'x'..size)
-          img = image.rgb2yuv(img)
-          dataset[c_i] = torch.Tensor(3, size, size):copy(img)
+          local img_ = image.scale(img, size..'x'..size)
+          img_ = image.rgb2yuv(img_)
+          dataset[c_i] = torch.Tensor(3, size, size):copy(img_)
           c_i = c_i + 1
+          if augment_factor ~= 0 then
+            for j=1,augment_factor do
+              local img_ = image.rotate(img, torch.uniform(-5,5)*math.pi/180)
+              img_ = image.scale(img_, size..'x'..size)
+              img_ = image.rgb2yuv(img_)
+              dataset[c_i] = torch.Tensor(3, size, size):copy(img_)
+              c_i = c_i + 1
+            end
+          end
         end
       end
       local filename = path.join(destDir, "class_"..c..".t7")
@@ -213,7 +223,7 @@ end
 
 return {
   csvToTable = csvToTable,
-  imagesToTensorFiles = imagesToTensorFile,
+  imagesToTensorFiles = imagesToTensorFiles,
   datasetFromClasses = datasetFromClasses,
   formatTestData = formatTestData
 }
