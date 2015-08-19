@@ -1,37 +1,50 @@
-require 'nn'
-require 'cunn'
-require 'cutorch'
 --Custom imports
 local learn = require 'learn'
+local path = require 'pl.path'
+local dir = require 'pl.dir'
 
 -- training parameters
+local modelDir = './models/'
+if not path.isdir(modelDir) then
+  dir.makepath(modelDir)
+end
+
 local filename = 'model-mom2-l5-3.t7'
 local dataPath = './dataset-43c-allex.t7'
-local train_params = {
-      filename = filename,
+
+local params = {
+      filename = path.join(modelDir, filename),
       batchSize = 100,
       only2classes = false,
       cudaOn = true,
       nb_epochs = 10000,
-      freq_save = 50,
+      freq_save = 100,
       -- SGD parameters
-      learningRate = 5e-3,
+      learningRate = 1e-3,
       learningRateDecay = 1e-4,
       weightDecay = 0,
-      momentum = 0.2,
+      momentum = 0.1,
 }
+
+
+if path.exists(params.filename) then
+  local name, ext = path.splitext(params.filename) 
+  local n = 1
+  while path.exists((name .. '-' .. '%.2i' .. ext):format(n)) do
+    print((name .. '%.2i' .. ext):format(n))
+    n = n + 1
+  end
+  params.filename = (name .. '-' .. '%.2i' .. ext):format(n)
+end
+
 
 local network = learn.createNetwork() 
 
 local mlp_ = nn.Sequential()
-if train_params.network_file then
-  mlp_ = torch.load(network_file)
-else
-  mlp_:add(network)
-end
+mlp_:add(network)
 
-print(train_params)
---print(sgd_params)
-learn.trainNetwork(mlp_, dataPath, train_params)
+print(params)
+--print(sgd_paramslearn.trainNetwork(mlp_, dataPath, train_params)
+learn.trainNetwork(mlp_, dataPath, params)
 
-torch.save(filename, mlp_)
+torch.save(params.filename, mlp_)
