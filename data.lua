@@ -17,7 +17,7 @@ local meta_file = 'GT-00000.csv'
 
 -- Functions
 --
-function shuffle(t)
+local function shuffle(t)
   local n = #t
   while n >= 2 do
     --n is now the last pertinent index
@@ -29,7 +29,7 @@ function shuffle(t)
   return t
 end
 
-function csvToTable(meta_file)
+local function csvToTable(meta_file)
   -- Returns a table (dict) of the metadata indexed by filenames
   -----------------------------------------
   -- meta_file (string)
@@ -58,7 +58,7 @@ end
 
 
 
-function imagesToTensorFiles(origDir, destDir, size)
+local function imagesToTensorFiles(origDir, destDir, size)
   -- extract all the examples and write them per class
   -- The t7 files will be written in the current dir
   ------------------------------------
@@ -124,7 +124,7 @@ function imagesToTensorFiles(origDir, destDir, size)
   return dataset
 end
 
-function datasetFromClasses(origDir, ex_per_class, classes)
+local function datasetFromClasses(origDir, ex_per_class, classes)
   -- Extract a given number of examples in the selected classes to create a dataset object.
   -- The dataset will be saved to a .t7 file. Examples are shuffled.
   ---------------------------------------------------
@@ -176,7 +176,7 @@ function datasetFromClasses(origDir, ex_per_class, classes)
 end
 
 
-function formatTestData(test_orig, size, meta_test)
+local function formatTestData(test_orig, size, meta_test)
   -- get the test data in a correct dataset object
   local dataset_ = {}
   local metadata = csvToTable(meta_test)
@@ -209,45 +209,11 @@ function formatTestData(test_orig, size, meta_test)
 
   return dataset 
 end
-----------------------------------------------------------------------------
-----------------------------------------------------------------------------
-local train_orig = './train/GTSRB/Final_Training/Images'
-local test_orig = './test/GTSRB/Final_Test/Images'
-
-local train_dest = './train/class_files'
-local test_dest = './test/test_data.t7'
-
-local meta_test = './gt/GT-final_test.csv'
-----------------------------------------------------
-----------------------------------------------------
-local set = 'train'
--- Extract data from files to Tensors
-extraction = false
--- Create the dataset tensor file
-creation = true
 
 
-if not path.isdir(train_dest) then
-  dir.makepath(train_dest)
-end
-
-print(set)
-if set == 'train'then
-  if extraction then
-    print('Extracting the images')
-    dataset = imagesToTensorFiles(train_orig, train_dest, size)
-  end
-  if creation then
-    print('Creating a dataset file')
-    dataset, nb_classes, nb_examples = datasetFromClasses(train_dest)
-    local nb_ex
-  if nb_examples==math.huge then
-    nb_ex = 'all'
-  end
-  torch.save('dataset-'.. nb_classes .. 'c-' .. nb_ex .. 'ex.t7', dataset)
-  end
-elseif set == 'test' then
-  local testdata = formatTestData(test_orig, 32, meta_test)
-  torch.save(test_dest, testdata)
-end
-   
+return {
+  csvToTable = csvToTable,
+  imagesToTensorFiles = imagesToTensorFile,
+  datasetFromClasses = datasetFromClasses,
+  formatTestData = formatTestData
+}
