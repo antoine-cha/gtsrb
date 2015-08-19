@@ -1,33 +1,64 @@
 # GTSRB Challenge
 
-a.k.a German Traffic Sign Recognition Benchmark :de: :no_entry: :no_bicycles:
-:no_entry_sign: ...
 
-## Goal
 
-Use [Torch](http://torch.ch/) to train and evaluate a 2-stage convolutional
-neural network able to classify German traffic sign images (43 classes):
+The repository contains 4 files besides the README.md :
+* data.lua : functions to interface with the unzipped version of the data
+* getdata.lua : command line interface to data.lua
+* learn.lua : training functions
+* main.lua : to choose parameters and launch experiments
 
-* fork the repository under your account,
-* go to Settings > Features and enable Issues,
-* create an issue under your repo describing your approach,
-* report your result(s),
-* commit your code,
-* edit the README with pre-requisites and usage,
-* boost accuracy by experimenting the multi-scale architecture,
-* compare with the results obtained in matching mode (i.e use the features with a distance-based search).
+## data.lua
 
-## Paper
+The processing is done by data.lua functions
 
-[Traffic Sign Recognition with Multi-Scale Convolutional Networks](http://computer-vision-tjpn.googlecode.com/svn/trunk/documentation/reference_papers/2-sermanet-ijcnn-11-mscnn.pdf), by Yann LeCun et al.
+#### shuffle
+Shuffle a table in place
 
-## Dataset
+#### csvToTable
+Transforms a CSV file into a table indexed by filenames
 
-### Training
+#### imageToTensorFiles
+Extract images from ppm files to t7 files (one per class)
 
-`http://benchmark.ini.rub.de/Dataset/GTSRB_Final_Training_Images.zip` (263 MB)
+#### datasetFromClasses
+Transform the per-class t7 files into a dataset object (dataset.data, 
+dataset.labels) and writes it.
 
-### Testing
+#### formatTestData
+Perform the 2 previous operations on the test data (the folders have a different structure).
 
-`http://benchmark.ini.rub.de/Dataset/GTSRB_Final_Test_Images.zip` (84 MB)
-`http://benchmark.ini.rub.de/Dataset/GTSRB_Final_Test_GT.zip` (98 kB)
+
+
+## getdata.lua
+To be executed for data setup.
+The origin dirs are hard coded.
+
+    Gets the data in the right format
+    -s, --set (default "test")  Set to be processed
+    -e, --extraction  (default true) extraction from ppm files ?
+    -c, --creation (default true) creation of dataset from t7 files ?
+    -d, --destination (default nil) target directory to write
+
+## learn.lua
+
+#### getDataset
+Returns the dataset from a given file, changes labels to 1,-1 if only 2 classes
+
+#### createNetwork
+Returns the (non-trained) 108 network from the paper, 
+only takes the number of classes as input.
+
+#### trainNetwork
+Trains a network given as arg. 
+* Training uses optim.sgd
+* Can be done on CPU or GPU
+* An example of the table of params is in main.ilua
+* The network is saved every <params.freq_save> epochs
+
+## main.lua 
+Setup the experiment, and launch using learn.lua's functions.
+The models are saved at ./models/
+It will create a new file for every experiment.
+Can't retrain an existing network for now.
+
