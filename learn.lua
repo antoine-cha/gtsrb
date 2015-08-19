@@ -36,7 +36,6 @@ local function createNetwork(nb_classes)
   -- Define the network as in the paper
   local nb_classes = nb_classes or 43
   -- Enables to test the output sizes
-  local x = torch.Tensor(3,32,32)
 
   local mlp = nn.Sequential()
   kW = 3; kH=3;
@@ -45,7 +44,8 @@ local function createNetwork(nb_classes)
   local divnor1 = nn.SpatialDivisiveNormalization(108)
   local max1 = nn.SpatialMaxPooling(4, 4, 4, 4)
   -- Branching now
-  local ways = nn.Concat(1)
+  -- Warning : Concat along 2nd axis for batch training !
+  local ways = nn.Concat(2)
   -- First branch with 2 layers of convolutions
   local way1 = nn.Sequential()
   local conv2 = nn.SpatialConvolutionMM(108, 108, kW, kH)
@@ -80,8 +80,6 @@ local function createNetwork(nb_classes)
 
   mlp:add(nn.Linear(100,nb_classes))
   mlp:add(nn.SoftMax())
-  print('Network outputs :')
-  print(mlp:forward(x):size())
   
   return mlp
 end
@@ -102,75 +100,88 @@ local function trainNetwork(network, dataset_file, params)
   --  specifies the task to format the dataset
   -- batchSize(int)
   local dataset = getDataset(dataset_file, params.only2classes)
+  dataset.data  = dataset.data:float()
+  dataset.labels  = dataset.labels:float()
   local cudaOn = params.cudaOn
-
-  if params.cudaOn then
-    network:cuda()
-  end
+ 
   ---- Training Criterion defined by the task
   if params.only2classes then
     criterion = nn.MSECriterion()
     print('MSE Criterion')
   else
     criterion = nn.CrossEntropyCriterion()
-    if cudaOn then
-      criterion:cuda()
-    end
     print('Cross-entropy Criterion')
   end
 
-  if params.batchSize == 1 then
-    local trainer = nn.StochasticGradient(network, criterion)
-    trainer.learningRate = 0.01
-    trainer.shuffleIndices = false
-    print('Training using normal stochastic gradient')
-    trainer:train(dataset)
-  else
-    f, df = network:getParameters()
-    -- Define the function to be optimized for SGD
-    _nidx_ = 1209 -- 9*128
-    feval = function(f_new)
-      -- set x to x_new, if different
-      -- (in this simple example, x_new will typically always point to x,
-      -- so the copy is really useless)
-      if f ~= f_new then
-        f:copy(f_new)
-      end
-      -- select a new training sample
-      _nidx_ = (_nidx_ or 0) + 1
-      if _nidx_ > (#dataset) then _nidx_ = 1 end
-      local sample = dataset[_nidx_]
-      local target = sample[2]
-      local inputs = sample[1]
-      if cudaOn then
-        inputs:cuda()
-        --target:cuda()
-      end
-      
+  if cudaOn then
+    criterion:cuda()
+    network:cuda()
+  end
+  -- Some layers may have different behaviours during training
+  network:training()
+  local conf = optim.ConfusionMatrix(43)
 
-      -- reset gradients (gradients are always accumulated, to accomodate 
-      -- batch methods)
-      df:zero()
-      --evaluate the loss function and its derivative wrt x,
-      local loss_x = criterion:forward(network:forward(inputs), target)
-      network:backward(inputs, criterion:backward(network.output, target))
-      -- return loss(x) and dloss/dx
-      return loss_x, df
+  f, df = network:getParameters()
+  local base_size_ = dataset.data[1]:size()
+  local targets = torch.CudaTensor(params.batchSize)
+  local inputs = torch.Tensor(params.batchSize, 
+                base_size_[1], base_size_[2], base_size_[3])
+
+  local indices = torch.range(1,
+  dataset.data:size(1)):long():split(params.batchSize)
+  -- remove last so that all batches have same size
+  indices[#indices] = nil
+  local _ind_ = 1
+
+  -- Define the function to be optimized for SGD
+  local feval = function(f_new)
+
+    -- set x to x_new, if different
+    -- (in this simple example, x_new will typically always point to x,
+    -- so the copy is really useless)
+    if f ~= f_new then
+      f:copy(f_new)
+    end
+    -- reset gradients (gradients are always accumulated, to accomodate 
+    -- batch methods)
+    df:zero()
+    --Get the indices of the next batch
+    _ind_ = _ind_ + 1 
+    if _ind_ == #indices then _ind_ = 1 end
+    batch = indices[_ind_]
+
+    local inputs = dataset.data:index(1, batch):cuda()
+    targets:copy(dataset.labels:index(1, batch)):cuda()
+
+    if cudaOn then
+      inputs:cuda()
+      targets:cuda()
     end
 
+    local outputs = network:forward(inputs)
+    --evaluate the loss function and its derivative wrt x,
+    local loss_x = criterion:forward(outputs, targets)
+    local df_do = criterion:backward(outputs, targets)
+    network:backward(inputs, df_do)
+    conf:batchAdd(outputs, targets)
+    -- return loss(x) and dloss/dx
+    return loss_x, df
+  end
 
-    -- Start training
-    for i=1, params.nb_epochs do
-      current_loss = 0
-      for i= 1,params.batchSize do
-        _, fs = optim.sgd(feval, f, params)
-        current_loss = current_loss + fs[1]
-      end
-      current_loss = current_loss / 100
-      print(i ..'th iteration, current_loss :' .. current_loss)
-      if i % params.freq_save == 0 then 
-        torch.save(params.filename, network)
-      end
+
+  -- Start training
+  for i=1, params.nb_epochs do
+    _, fs = optim.sgd(feval, f, params)
+    local current_loss = fs[1] / params.batchSize
+    conf:updateValids()
+    io.write((i ..'th iteration, Current loss :' .. 
+              ' %.6f // '):format(current_loss))
+    io.write(('Train accuracy: '..'%.2f \n'):format(
+            conf.totalValid * 100))
+    conf:zero()
+    if i % params.freq_save == 0 then 
+      torch.save(params.filename, network)
+      print('Model saved at ' .. params.filename)
     end
   end
 end
