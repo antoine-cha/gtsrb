@@ -2,11 +2,12 @@
 
 
 
-The repository contains 4 files besides the README.md :
+The repository contains 5 files besides the README.md :
 * data.lua : functions to interface with the unzipped version of the data
 * getdata.lua : command line interface to data.lua
 * learn.lua : training functions
 * main.lua : to choose parameters and launch experiments
+* test.lua : tests a trained network, displays the confusion matrix 
 
 ## data.lua
 
@@ -61,4 +62,11 @@ Setup the experiment, and launch using learn.lua's functions.
 The models are saved at ./models/  
 It will create a new file for every experiment.  
 Can't retrain an existing network for now.
+
+
+## test.lua
+Test a network, the file has to be given in the script, and displays the confusion
+matrix.  
+**Warning :** Assumes 43 classes as output
+
 
