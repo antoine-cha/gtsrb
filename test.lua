@@ -3,41 +3,50 @@ require 'nn'
 require 'image'
 require 'cunn'
 require 'cutorch'
+require 'sys'
 
 local comp = require 'pl.comprehension' . new()
 
 -- Get a network and test it 
-function show_conf(network, dataset_file, cudaOn)
+function show_conf(network, dataset_file, batchSize)
   -- Show the confusion matrix
 
   local dataset = torch.load(dataset_file)
-  conf = optim.ConfusionMatrix(43)
+  local conf = optim.ConfusionMatrix(43)
   conf:zero()
-  local N = dataset.data:size(1)
-  if not cudaOn then
-    network:float()
+
+  local indices = torch.range(1,
+      dataset.data:size(1)):long():split(batchSize)
+  -- remove last so that all batches have same size
+  indices[#indices] = nil
+  local base_size_ = dataset.data[1]:size()
+  local targets = torch.CudaTensor(batchSize)
+  local preds = torch.CudaTensor(batchSize)
+  local samples = torch.CudaTensor(batchSize, 
+                base_size_[1], base_size_[2], base_size_[3])
+  network = network:cuda()
+
+  for i=1, 10 do
+    sys.sleep(0.5)
+    samples = dataset.data:index(1,indices[i]):cuda()
+    preds = network:forward(samples)
+    targets:copy(dataset.labels:index(1, indices[i]))
+    conf:batchAdd(preds, targets)
+    print(i)
   end
 
-  for i=1, N do
-    if i < 100 then
-      print(dataset.data:index(1,i))
-      local pred = network:forward(dataset.data:index(1,i))
-      conf:add(pred, dataset.labels[i])
-    end
-  end
-
+  conf:updateValids()
   io.write(('Test accuracy: '..'%.2f \n'):format(
             conf.totalValid * 100))
-  --print(conf)
-  image.display(conf:render('score', false,20))  
 end
 
 
-local model_file = './models/model-mom2-l5-3.t7'
+local model_file = './models/model-.t7'
 local dataset_file = '../gtsrb/test/test_data.t7'
-local cudaOn = true
+local batchSize = 100
 local network = torch.load(model_file)
+print(torch.type(network))
 
 print('Compute the confusion matrix')
-show_conf(network, dataset_file)
+show_conf(network, dataset_file, batchSize)
 
