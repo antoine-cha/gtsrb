@@ -25,6 +25,9 @@ function show_conf(network, dataset_file, cudaOn)
       conf:add(pred, dataset.labels[i])
     end
   end
+
+  io.write(('Test accuracy: '..'%.2f \n'):format(
+            conf.totalValid * 100))
   --print(conf)
   image.display(conf:render('score', false,20))  
 end
