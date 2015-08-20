@@ -1,6 +1,7 @@
 require 'nn'
 require 'optim'
 require 'cunn'
+require 'sys'
 
 -- define the dataset
 local function getDataset(file, only2classes)
@@ -121,6 +122,8 @@ local function trainNetwork(network, params)
     criterion:cuda()
     network:cuda()
   end
+  local time = sys.clock()
+  local time_0 = sys.clock()
   -- Some layers may have different behaviours during training
   network:training()
   local conf = optim.ConfusionMatrix(43)
@@ -180,11 +183,12 @@ local function trainNetwork(network, params)
     local current_loss = fs[1] / params.batchSize
     conf:updateValids()
     if i%10 == 0 then
-      local t = time:time()
       io.write(('%.2f / ' .. params.nb_epochs.. ' epochs , Average loss :' .. 
                 ' %.6f // '):format(i/#indices, current_loss))
-      io.write(('Train acc: '..'%.2f \n'):format(
+      io.write(('Train acc: '..'%.2f '):format(
               conf.totalValid * 100))
+      io.write(('t=%.1f s \n'):format(sys.clock() - time))
+      time = sys.clock()
       
       conf:zero()
     end
@@ -193,6 +197,7 @@ local function trainNetwork(network, params)
       print('Model saved at ' .. params.filename)
     end
   end
+  print(('Total experience time : %.1f s'):format(sys.clock() - time_0))
 end
 
 return {getDataset = getDataset,
