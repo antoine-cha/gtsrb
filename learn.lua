@@ -53,6 +53,7 @@ local function createNetwork(nb_classes)
   local divnor2 = nn.SpatialDivisiveNormalization(108)
   local max2 = nn.SpatialMaxPooling(4, 4, 4, 4)
   local conv3 = nn.SpatialConvolutionMM(108, 50, 1, 1) 
+  
   way1:add(conv2)
   way1:add(nn.ReLU())
   way1:add(subnor2)
@@ -63,7 +64,9 @@ local function createNetwork(nb_classes)
 
   local way2 = nn.Sequential()
   way2:add(nn.SpatialConvolution(108,50,7,7))
+  way2:add(nn.ReLU())
   way2:add(nn.Reshape(50,1)) 
+
   ways:add(way1)
   ways:add(way2)
 
@@ -78,7 +81,11 @@ local function createNetwork(nb_classes)
 
   mlp:add(nn.Reshape(100))
 
-  mlp:add(nn.Linear(100,nb_classes))
+  mlp:add(nn.Linear(100,100))
+  mlp:add(nn.ReLU())
+  mlp:add(nn.Linear(100,50))
+  mlp:add(nn.ReLU())
+  mlp:add(nn.Linear(50,nb_classes))
   mlp:add(nn.SoftMax())
   
   return mlp
@@ -86,7 +93,7 @@ end
 
 
 
-local function trainNetwork(network, dataset_file, params)
+local function trainNetwork(network, params)
   -- Train a network given as input, with the given dataset and batchSize
   -- --------------------------
   -- Returns nothing :
@@ -94,12 +101,9 @@ local function trainNetwork(network, dataset_file, params)
   -- --------------------------
   -- network (mlp)
   --  network to be trained
-  -- dataset_file (path)
-  --  relative path to the dataset file
-  -- only2classes(bool)
-  --  specifies the task to format the dataset
-  -- batchSize(int)
-  local dataset = getDataset(dataset_file, params.only2classes)
+  -- params(table)
+  --  contains the parameters
+  local dataset = getDataset(params.dataPath, params.only2classes)
   dataset.data  = dataset.data:float()
   dataset.labels  = dataset.labels:float()
   local cudaOn = params.cudaOn
@@ -176,10 +180,12 @@ local function trainNetwork(network, dataset_file, params)
     local current_loss = fs[1] / params.batchSize
     conf:updateValids()
     if i%10 == 0 then
-      io.write(('%.2f /' .. params.nb_epochs.. 'epochs , Average loss :' .. 
+      local t = time:time()
+      io.write(('%.2f / ' .. params.nb_epochs.. ' epochs , Average loss :' .. 
                 ' %.6f // '):format(i/#indices, current_loss))
       io.write(('Train acc: '..'%.2f \n'):format(
               conf.totalValid * 100))
+      
       conf:zero()
     end
     if i % params.freq_save == 0 then 
