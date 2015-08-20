@@ -4,9 +4,19 @@ require 'image'
 require 'cunn'
 require 'cutorch'
 require 'sys'
+local lapp = require 'pl.lapp'
 
+
+local args = lapp [[
+    Test the given model
+    <model> (string) path to the model
+]]
 local comp = require 'pl.comprehension' . new()
-
+print(args)
+if not args.model then
+  print('Give the model path as argument')
+  os.exit()
+end
 -- Get a network and test it 
 function show_conf(network, dataset_file, batchSize)
   -- Show the confusion matrix
@@ -40,10 +50,9 @@ function show_conf(network, dataset_file, batchSize)
 end
 
 
-local model_file = './models/model-.t7'
 local dataset_file = '../gtsrb/test/test_data.t7'
 local batchSize = 100
-local network = torch.load(model_file)
+local network = torch.load(args.model)
 print(torch.type(network))
 
 print('Compute the confusion matrix')
