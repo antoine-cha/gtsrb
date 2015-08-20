@@ -18,7 +18,7 @@ if not args.model then
   os.exit()
 end
 -- Get a network and test it 
-function show_conf(network, dataset_file, batchSize)
+function show_conf(network, dataset_file, batchSize, preprocess)
   -- Show the confusion matrix
 
   local dataset = torch.load(dataset_file)
@@ -38,6 +38,10 @@ function show_conf(network, dataset_file, batchSize)
 
   for i=1, #indices do
     samples:copy(dataset.data:index(1,indices[i]))
+    -- Do the same preprocessing as training data
+    if preprocess then
+      samples = samples - samples:mean(1)
+    end
     preds = network:forward(samples)
     targets:copy(dataset.labels:index(1, indices[i]))
     conf:batchAdd(preds, targets)
