@@ -5,14 +5,15 @@ local dir = require 'pl.dir'
 
 local args = lapp [[
     Gets the data in the right format
-    -r, --lr (number) learning rate
-    -m, --momentum (number)
-    --lrdecay  (number) learning rate decay
-    --weightdecay (number) weight decay
-    --model (string) model name
+    -r, --lr (default 0.1) learning rate
+    -m, --momentum (default 0.5)
+    --lrdecay  (default 1e-4) learning rate decay
+    --weightdecay (default 0.0) weight decay
+    --model (default model.t7) model name
+    --retrain (default '') network to retrain
 ]]
 local params = {
-      orig_file = '',
+      orig_file = args.retrain,
       dataPath = './dataset-43c-allex.t7',
       modelDir = './models/',
       filename = args.model or 'model.t7',
@@ -22,10 +23,10 @@ local params = {
       freq_save = 500,
       -- SGD parameters
       batchSize = 100,
-      learningRate = args.lr or 1,
-      learningRateDecay = args.lrdecay or 1e-4,
-      weightDecay = args.weightdecay or 0,
-      momentum = args.momentum or 0.5,
+      learningRate = args.lr,
+      learningRateDecay = args.lrdecay,
+      weightDecay = args.weightdecay,
+      momentum = args.momentum,
       dampening = 0,
       nesterov = 1,
 }
@@ -43,7 +44,7 @@ if path.exists(params.filename) then
     n = n + 1
   end
   params.filename = (name .. '-' .. '%.2i' .. ext):format(n)
-  params.paramsFile = (name .. '-' .. '%.2i' .. params .. ext):format(n)
+  params.paramsFile = (name .. '-' .. '%.2i-params' .. ext):format(n)
 end
 
 local mlp_ = nn.Sequential()
