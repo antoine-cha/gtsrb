@@ -58,7 +58,7 @@ end
 
 
 
-local function imagesToTensorFiles(origDir, destDir, size, augment_factor)
+local function imagesToTensorFiles(origDir, destDir, size, augment_factor, prep)
   -- extract all the examples and write them per class
   -- The t7 files will be written at destDir
   ------------------------------------
@@ -115,9 +115,10 @@ local function imagesToTensorFiles(origDir, destDir, size, augment_factor)
           img_ = image.rgb2yuv(img_)
           dataset[c_i] = torch.Tensor(3, size, size):copy(img_)
           c_i = c_i + 1
+          -- Data augmentation
           if augment_factor ~= 0 then
             for j=1,augment_factor do
-              local img_ = image.rotate(img, torch.uniform(-5,5)*math.pi/180)
+              local img_ = image.rotate(img, torch.uniform(-15,15)*math.pi/180)
               img_ = image.scale(img_, size..'x'..size)
               img_ = image.rgb2yuv(img_)
               dataset[c_i] = torch.Tensor(3, size, size):copy(img_)
@@ -171,6 +172,7 @@ local function datasetFromClasses(origDir, ex_per_class, classes)
     end
   end
   shuffle(dataset_)
+
   -- Transform dataset into 2 tensors to be sliced
   local dataset = {}
   dataset.data = torch.Tensor(#dataset_, dataset_[1][1]:size(1),
@@ -178,7 +180,7 @@ local function datasetFromClasses(origDir, ex_per_class, classes)
                                          dataset_[1][1]:size(3))
   dataset.labels = torch.Tensor(#dataset_)
   for i, c in ipairs(dataset_) do
-    dataset.data[{i,{}}] = c[1]
+    dataset.data[{i,{}}]:copy(c[1])
     dataset.labels[i] = c[2]
   end
 
@@ -220,10 +222,17 @@ local function formatTestData(test_orig, size, meta_test)
   return dataset 
 end
 
+function preprocess(dataset)
+  for i=1, dataset.data:size(1) do
+      dataset.data[{i, {}}] = dataset.data[{i, {}}] - dataset.data[{i, {}}]:mean() 
+  end
+end
+
 
 return {
   csvToTable = csvToTable,
   imagesToTensorFiles = imagesToTensorFiles,
   datasetFromClasses = datasetFromClasses,
-  formatTestData = formatTestData
+  formatTestData = formatTestData,
+  preprocess = preprocess
 }
