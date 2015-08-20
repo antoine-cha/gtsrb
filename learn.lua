@@ -170,12 +170,13 @@ local function trainNetwork(network, dataset_file, params)
 
 
   -- Start training
-  for i=1, params.nb_epochs do
+  local max_batches = params.nb_epochs * #indices
+  for i=1, max_batches do
     _, fs = optim.sgd(feval, f, params)
     local current_loss = fs[1] / params.batchSize
     conf:updateValids()
     if i%10 == 0 then
-      io.write(('%.2f ' ..'th epoch, Average loss :' .. 
+      io.write(('%.2f /' .. params.nb_epochs.. 'epochs , Average loss :' .. 
                 ' %.6f // '):format(i/#indices, current_loss))
       io.write(('Train acc: '..'%.2f \n'):format(
               conf.totalValid * 100))
