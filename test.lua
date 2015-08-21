@@ -47,7 +47,8 @@ function show_conf(network, dataset_file, batchSize, preprocess)
     samples:copy(dataset.data:index(1,indices[i]))
     -- Do the same preprocessing as training data
     if preprocess then
-      samples = samples - samples:mean(1)
+      local mean_ = samples:mean(2):mean(3):mean(4)
+      samples = samples - mean_:expand(samples:size())
     end
     preds = network:forward(samples)
     targets:copy(dataset.labels:index(1, indices[i]))
