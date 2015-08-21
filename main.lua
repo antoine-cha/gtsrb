@@ -7,7 +7,7 @@ local args = lapp [[
     Gets the data in the right format
     -r, --lr (default 0.1) learning rate
     -m, --momentum (default 0.5)
-    -b, --batch (default 100) batch size
+    -b, --batch (default 64) batch size
     --lrdecay  (default 1e-4) learning rate decay
     --weightdecay (default 1e-4) weight decay
     --model (default model.t7) model name
