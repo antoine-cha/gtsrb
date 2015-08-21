@@ -38,6 +38,8 @@ local function createSimpleNetwork(nb_classes)
   local conv1 = nn.SpatialConvolutionMM(3, 43, kW, kH)
   mlp:add(conv1)
   mlp:add(nn.Reshape(43))
+  mlp:add(nn.LogSoftMax())
+
   return mlp
 end
 
@@ -78,7 +80,7 @@ local function createNetwork(nb_classes)
   mlp:add(nn.Reshape(4*units_2))
   mlp:add(nn.Linear(4*units_2, nb_classes))
   print(mlp:forward(x):size())
-  mlp:add(nn.SoftMax())
+  mlp:add(nn.LogSoftMax())
   
   return mlp
 end
