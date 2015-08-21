@@ -20,7 +20,7 @@ local params = {
       filename = args.model or 'model.t7',
       only2classes = false,
       cudaOn = true,
-      nb_epochs = 10,
+      nb_epochs = 7,
       freq_save = 500,
       -- SGD parameters
       batchSize = args.batch,
