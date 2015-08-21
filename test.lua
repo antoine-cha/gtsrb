@@ -39,7 +39,10 @@ function show_conf(network, dataset_file, batchSize, preprocess)
   local samples = torch.CudaTensor(batchSize, 
                 base_size_[1], base_size_[2], base_size_[3])
   network = network:cuda()
+  -- limit testing for large datasets
+  local N = math.min(#indices, 1000)
 
+  for i=1, N do
     xlua.progress(i, N)
     samples:copy(dataset.data:index(1,indices[i]))
     -- Do the same preprocessing as training data
@@ -49,7 +52,6 @@ function show_conf(network, dataset_file, batchSize, preprocess)
     preds = network:forward(samples)
     targets:copy(dataset.labels:index(1, indices[i]))
     conf:batchAdd(preds, targets)
-    print(i)
   end
 
   conf:updateValids()
