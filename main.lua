@@ -7,14 +7,15 @@ local args = lapp [[
     Gets the data in the right format
     -r, --lr (default 0.1) learning rate
     -m, --momentum (default 0.5)
+    -b, --batch (default 100) batch size
     --lrdecay  (default 1e-4) learning rate decay
-    --weightdecay (default 0.0) weight decay
+    --weightdecay (default 1e-4) weight decay
     --model (default model.t7) model name
     --retrain (default '') network to retrain
 ]]
 local params = {
       orig_file = args.retrain,
-      dataPath = './dataset-43c-allex.t7',
+      dataPath = './dataset-43c-allex-2fa-prep.t7',
       modelDir = './models/',
       filename = args.model or 'model.t7',
       only2classes = false,
@@ -22,13 +23,13 @@ local params = {
       nb_epochs = 10,
       freq_save = 500,
       -- SGD parameters
-      batchSize = 100,
+      batchSize = args.batch,
       learningRate = args.lr,
       learningRateDecay = args.lrdecay,
       weightDecay = args.weightdecay,
       momentum = args.momentum,
-      dampening = 0,
-      nesterov = 1,
+      --dampening = 0,
+      --nesterov = 1,
 }
 
 params.filename = path.join(params.modelDir, params.filename)
@@ -52,8 +53,9 @@ if params.orig_file ~= '' then
   local network = torch.load(params.orig_file)
   print('Using ' .. params.orig_file .. ' as starting network')
   mlp_:add(network)
+  local params_file = ''
 else
-  local network = learn.createNetwork() 
+  local network = learn.createMultiscaleNetwork() 
   mlp_:add(network)
 end
 
