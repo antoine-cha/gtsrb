@@ -42,16 +42,46 @@ local function createSimpleNetwork(nb_classes)
 end
 
 local function createNetwork(nb_classes)
-  -- Define the network as in the paper
   local nb_classes = nb_classes or 43
+  local x = torch.Tensor(1,3,32,32)
   -- Enables to test the output sizes
 
   local mlp = nn.Sequential()
-  kW = 3; kH=3;
-  local conv1 = nn.SpatialConvolutionMM(3, 108, kW, kH)
-  local subnor1 = nn.SpatialSubtractiveNormalization(108)
-  local divnor1 = nn.SpatialDivisiveNormalization(108)
-  local max1 = nn.SpatialMaxPooling(4, 4, 4, 4)
+  local units_1 = 32
+  local units_2 = 32
+  --1st layer
+  local conv1 = nn.SpatialConvolutionMM(3, units_1, 3, 3)
+  local divnor1 = nn.SpatialDivisiveNormalization(units_1)
+  local subnor1 = nn.SpatialSubtractiveNormalization(units_1)
+  local max1 = nn.SpatialMaxPooling(2, 2, 2, 2)
+  mlp:add(conv1)
+  mlp:add(nn.Tanh())
+  mlp:add(nn.Abs())
+  mlp:add(subnor1)
+  mlp:add(divnor1)
+  mlp:add(max1)
+  print(mlp:forward(x):size())
+
+  --2nd layer
+  local conv2 = nn.SpatialConvolutionMM(units_1, units_2, 12, 12)
+  local max2 = nn.SpatialMaxPooling(2, 2, 2, 2)
+  local divnor2 = nn.SpatialDivisiveNormalization(units_2)
+  local subnor2 = nn.SpatialSubtractiveNormalization(units_2)
+  mlp:add(conv2)
+  mlp:add(nn.Tanh())
+  mlp:add(nn.Abs())
+  mlp:add(subnor2)
+  mlp:add(divnor2)
+  mlp:add(max2)
+  print(mlp:forward(x):size())
+
+  mlp:add(nn.Reshape(4*units_2))
+  mlp:add(nn.Linear(4*units_2, nb_classes))
+  print(mlp:forward(x):size())
+  mlp:add(nn.SoftMax())
+  
+  return mlp
+end
   -- Branching now
   -- Warning : Concat along 2nd axis for batch training !
   local ways = nn.Concat(2)
