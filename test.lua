@@ -4,6 +4,7 @@ require 'image'
 require 'cunn'
 require 'cutorch'
 require 'sys'
+require 'xlua'
 local lapp = require 'pl.lapp'
 
 
@@ -36,7 +37,7 @@ function show_conf(network, dataset_file, batchSize, preprocess)
                 base_size_[1], base_size_[2], base_size_[3])
   network = network:cuda()
 
-  for i=1, #indices do
+    xlua.progress(i, N)
     samples:copy(dataset.data:index(1,indices[i]))
     -- Do the same preprocessing as training data
     if preprocess then
