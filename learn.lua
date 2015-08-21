@@ -93,7 +93,7 @@ local function createMultiscaleNetwork()
 
   local kW = 3; local kH=3;
   local units_1 = 108
-  local units_2 = 108
+  local units_2 = 200
   local units_3 = 108
   local units_ = 108
   local mlp = nn.Sequential()
