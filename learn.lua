@@ -152,11 +152,10 @@ local function trainNetwork(network, params)
   ---- Training Criterion defined by the task
   if params.only2classes then
     criterion = nn.MSECriterion()
-    print('MSE Criterion')
   else
-    criterion = nn.CrossEntropyCriterion()
-    print('Cross-entropy Criterion')
+    criterion = nn.ClassNLLCriterion()
   end
+  print(criterion)
 
   if cudaOn then
     criterion:cuda()
