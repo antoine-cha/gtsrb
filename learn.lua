@@ -92,10 +92,10 @@ local function createMultiscaleNetwork()
   local x = torch.Tensor(1,3,32,32)
 
   local kW = 3; local kH=3;
-  local units_1 = 28
-  local units_2 = 32
-  local units_3 = 32
-  local units_ = 32
+  local units_1 = 108
+  local units_2 = 108
+  local units_3 = 108
+  local units_ = 108
   local mlp = nn.Sequential()
   -- 1st layer
   local conv1 = nn.SpatialConvolutionMM(3, units_1, kW, kH)
@@ -157,8 +157,15 @@ local function createMultiscaleNetwork()
   ways:add(way2)
   mlp:add(ways)
   mlp:add(nn.Reshape((units_3 + units_) *4))
+
   --Classifier
-  mlp:add(nn.Linear((units_3 + units_) *4, 43))
+  mlp:add(nn.Linear((units_3 + units_) *4, 100))
+  way2:add(nn.Tanh())
+  way2:add(nn.Abs())
+  mlp:add(nn.Linear(100, 100))
+  way2:add(nn.Tanh())
+  way2:add(nn.Abs())
+  mlp:add(nn.Linear(100, 43))
   mlp:add(nn.LogSoftMax())
  
      
