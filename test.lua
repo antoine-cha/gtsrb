@@ -11,6 +11,9 @@ local lapp = require 'pl.lapp'
 local args = lapp [[
     Test the given model
     <model> (string) path to the model
+    <dataset> (string) path to the dataset
+    -b, --batch (default 100) batch size
+    -p, --preprocess (default 1.0) preprocessing
 ]]
 local comp = require 'pl.comprehension' . new()
 print(args)
@@ -55,11 +58,9 @@ function show_conf(network, dataset_file, batchSize, preprocess)
 end
 
 
-local dataset_file = '../gtsrb/test/test_data.t7'
-local batchSize = 100
 local network = torch.load(args.model)
 print(torch.type(network))
 
 print('Compute the confusion matrix')
-show_conf(network, dataset_file, batchSize)
+show_conf(network, args.dataset, args.batch, args.preprocess)
 
