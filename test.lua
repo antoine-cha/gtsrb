@@ -65,5 +65,5 @@ local network = torch.load(args.model)
 print(torch.type(network))
 
 print('Compute the confusion matrix')
-show_conf(network, args.dataset, args.batch, args.preprocess)
+show_conf(network, args.dataset, args.batch, false)--args.preprocess)
 
