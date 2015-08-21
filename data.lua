@@ -203,7 +203,7 @@ local function formatTestData(test_orig, size, meta_test)
         img = image.scale(img, size..'x'..size)
         img = image.rgb2yuv(img)
         dataset_[c_i][1] = torch.Tensor(3, size, size):copy(img)
-        dataset_[c_i][2] = metadata[f].classId
+        dataset_[c_i][2] = metadata[f].classId + 1
         c_i = c_i + 1
       end
     end     
