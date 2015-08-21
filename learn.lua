@@ -84,51 +84,85 @@ local function createNetwork(nb_classes)
   
   return mlp
 end
+
+local function createMultiscaleNetwork()
+  local nb_classes = nb_classes or 43
+
+  -- Enables to test the output sizes
+  local x = torch.Tensor(1,3,32,32)
+
+  local kW = 3; local kH=3;
+  local units_1 = 28
+  local units_2 = 32
+  local units_3 = 32
+  local units_ = 32
+  local mlp = nn.Sequential()
+  -- 1st layer
+  local conv1 = nn.SpatialConvolutionMM(3, units_1, kW, kH)
+  local divnor1 = nn.SpatialDivisiveNormalization(units_1)
+  local subnor1 = nn.SpatialSubtractiveNormalization(units_2)
+  local max1 = nn.SpatialMaxPooling(2, 2, 2, 2)
+  mlp:add(conv1)
+  mlp:add(nn.ReLU())
+  mlp:add(divnor1)
+  mlp:add(max1)
+  local y = mlp:forward(x)
+  print(y:size())
+
   -- Branching now
   -- Warning : Concat along 2nd axis for batch training !
   local ways = nn.Concat(2)
-  -- First branch with 2 layers of convolutions
   local way1 = nn.Sequential()
-  local conv2 = nn.SpatialConvolutionMM(108, 108, kW, kH)
-  local subnor2 = nn.SpatialSubtractiveNormalization(108)
-  local divnor2 = nn.SpatialDivisiveNormalization(108)
-  local max2 = nn.SpatialMaxPooling(4, 4, 4, 4)
-  local conv3 = nn.SpatialConvolutionMM(108, 50, 1, 1) 
-  
+  local way2 = nn.Sequential()
+
+  -- 1st branch with 2 layers of convolutions
+  local conv2 = nn.SpatialConvolutionMM(units_1, units_2, 3, 3)
+  local subnor2 = nn.SpatialSubtractiveNormalization(units_2)
+  local divnor2 = nn.SpatialDivisiveNormalization(units_2)
+  local max2 = nn.SpatialMaxPooling(2, 2, 2, 2)
   way1:add(conv2)
-  way1:add(nn.ReLU())
+  way1:add(nn.Tanh())
+  way1:add(nn.Abs())
   way1:add(subnor2)
   way1:add(divnor2)
   way1:add(max2)
-  way1:add(conv3)
-  way1:add(nn.ReLU())
+  print(way1:forward(y):size())
 
-  local way2 = nn.Sequential()
-  way2:add(nn.SpatialConvolution(108,50,7,7))
-  way2:add(nn.ReLU())
-  way2:add(nn.Reshape(50,1)) 
+  local conv3 = nn.SpatialConvolutionMM(units_2, units_3, 3, 3) 
+  local subnor3 = nn.SpatialSubtractiveNormalization(units_3)
+  local divnor3 = nn.SpatialDivisiveNormalization(units_3)
+  local max3 = nn.SpatialMaxPooling(2, 2, 2, 2)
+  way1:add(conv3)
+  way1:add(nn.Tanh())
+  way1:add(nn.Abs())
+  way1:add(subnor3)
+  way1:add(divnor3)
+  way1:add(max3)
+  print(way1:forward(y):size())
+
+  -- 2nd branch : 1 conv
+  local conv_ = nn.SpatialConvolutionMM(units_1, units_, 5, 5) 
+  local subnor_ = nn.SpatialSubtractiveNormalization(units_)
+  local divnor_ = nn.SpatialDivisiveNormalization(units_)
+  local max_ = nn.SpatialMaxPooling(4, 4, 4, 4)
+  way2:add(conv_)
+  way2:add(nn.Tanh())
+  way2:add(nn.Abs())
+  way2:add(subnor_)
+  way2:add(divnor_)
+  way2:add(max_)
+  print(way2:forward(y):size())
 
   ways:add(way1)
   ways:add(way2)
-
-
-  mlp:add(conv1)
-  mlp:add(nn.ReLU())
-  mlp:add(subnor1)
-  mlp:add(divnor1)
-  mlp:add(max1)
-  -- Branching 
   mlp:add(ways)
-
-  mlp:add(nn.Reshape(100))
-
-  mlp:add(nn.Linear(100,100))
-  mlp:add(nn.ReLU())
-  mlp:add(nn.Linear(100,50))
-  mlp:add(nn.ReLU())
-  mlp:add(nn.Linear(50,nb_classes))
-  mlp:add(nn.SoftMax())
-  
+  mlp:add(nn.Reshape((units_3 + units_) *4))
+  --Classifier
+  mlp:add(nn.Linear((units_3 + units_) *4, 43))
+  mlp:add(nn.LogSoftMax())
+ 
+     
+  print(mlp:forward(x):size())
   return mlp
 end
 
