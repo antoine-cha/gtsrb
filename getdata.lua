@@ -7,7 +7,7 @@ local args = lapp [[
     -s, --set (default "test")  Set to be processed
     -e, --extraction  (default true) extraction from ppm files ?
     -c, --creation (default true) creation of dataset from t7 files ?
-    -d, --destination target directory to write
+    -d, --destination (string) target directory to write
     -a, --augment_factor (default 0) data augmentation factor
     -p, --preprocess (default true) preprocess the data
     --size (default 32) size of the image 
@@ -16,8 +16,8 @@ local args = lapp [[
 local targets = {}
 targets.train_orig = './train/GTSRB/Final_Training/Images'
 targets.test_orig = './test/GTSRB/Final_Test/Images'
-targets.train_dest = args.destination or './train/class_files'
-targets.test_dest = args.destination or './test/test_data.t7'
+targets.train_dest = args.destination
+targets.test_dest = args.destination
 targets.meta_test = './gt/GT-final_test.csv'
 
 local set = args.set
