@@ -32,6 +32,14 @@ local function getDataset(file, only2classes)
   return dataset
 end
 
+local function createSimpleNetwork(nb_classes)
+  local mlp = nn.Sequential()
+  kW = 32; kH=32;
+  local conv1 = nn.SpatialConvolutionMM(3, 43, kW, kH)
+  mlp:add(conv1)
+  mlp:add(nn.Reshape(43))
+  return mlp
+end
 
 local function createNetwork(nb_classes)
   -- Define the network as in the paper
@@ -202,5 +210,7 @@ end
 
 return {getDataset = getDataset,
         createNetwork = createNetwork,
-        trainNetwork = trainNetwork
+        trainNetwork = trainNetwork,
+        createSimpleNetwork = createSimpleNetwork,
+        createMultiscaleNetwork = createMultiscaleNetwork
       }
