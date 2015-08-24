@@ -13,7 +13,6 @@ local args = lapp [[
     <model> (string) path to the model
     <dataset> (string) path to the dataset
     -b, --batch (default 100) batch size
-    -p, --preprocess (default 1.0) preprocessing
 ]]
 local comp = require 'pl.comprehension' . new()
 print(args)
@@ -22,7 +21,7 @@ if not args.model then
   os.exit()
 end
 -- Get a network and test it 
-function show_conf(network, dataset_file, batchSize, preprocess)
+function show_conf(network, dataset_file, batchSize)
   -- Show the confusion matrix
 
   local dataset = torch.load(dataset_file)
@@ -45,11 +44,6 @@ function show_conf(network, dataset_file, batchSize, preprocess)
   for i=1, N do
     xlua.progress(i, N)
     samples:copy(dataset.data:index(1,indices[i]))
-    -- Do the same preprocessing as training data
-    if preprocess then
-      local mean_ = samples:mean(2):mean(3):mean(4)
-      samples = samples - mean_:expand(samples:size())
-    end
     preds = network:forward(samples)
     targets:copy(dataset.labels:index(1, indices[i]))
     conf:batchAdd(preds, targets)
@@ -65,5 +59,5 @@ local network = torch.load(args.model)
 print(torch.type(network))
 
 print('Compute the confusion matrix')
-show_conf(network, args.dataset, args.batch, false)--args.preprocess)
+show_conf(network, args.dataset, args.batch)
 
