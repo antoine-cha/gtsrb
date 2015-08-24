@@ -9,7 +9,8 @@ local csv = require('csv')
 local path = require('pl.path')
 local dir = require('pl.dir')
 local comp = require 'pl.comprehension' . new()
-
+require 'nn'
+require 'cunn'
 -- Paths
 local data_path = './train/GTSRB/Final_Training/Images/'
 local img_path = '00000'
@@ -223,9 +224,36 @@ local function formatTestData(test_orig, size, meta_test)
 end
 
 function preprocess(dataset)
-  for i=1, dataset.data:size(1) do
-      dataset.data[{i, {}}] = dataset.data[{i, {}}] - dataset.data[{i, {}}]:mean() 
-  end
+      print('Preprocessing the data')
+      --Global norm
+      print('\t Global normalization')
+      local mean_ =  dataset.data:mean()
+      local std_ = dataset.data:std()
+      for i=1, dataset.data:size(1) do
+        dataset.data[{i, {}}] = dataset.data[{i, {}}] - mean_
+        dataset.data[{i, {}}] = dataset.data[{i, {}}] / std_
+      end
+      print('Done')
+      -- Local norm
+      print('\t Local normalization')
+      local indices = torch.range(1,
+          dataset.data:size(1)):long():split(100)
+      local inputs = torch.CudaTensor(100, 3, 32, 32)
+      local outputs = torch.CudaTensor(100, 3, 32, 32)
+      local mlp = nn.Sequential()
+      mlp:add(nn.SpatialContrastiveNormalization(3))
+      mlp:cuda()
+      for i=1, #indices do
+        if i==#indices then
+            inputs = torch.CudaTensor(indices[i]:size(1), 3, 32, 32)
+            outputs = torch.CudaTensor(indices[i]:size(1), 3, 32, 32)
+        end
+        inputs:copy(dataset.data:index(1,indices[i]))
+        outputs = mlp:forward(inputs)
+        dataset.data:index(1, indices[i]):copy(outputs)
+      end
+
+    return dataset
 end
 
 
