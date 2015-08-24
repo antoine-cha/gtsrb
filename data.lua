@@ -179,40 +179,33 @@ local function datasetFromClasses(origDir, ex_per_class, classes)
   local nb_classes = #classes
   local ex_per_class = ex_per_class or math.huge
   local dataset_ = {}
-  local current_i = 1
+  local nb_total = 0
 
   for i_c, c in ipairs(classes) do
+    local examples = torch.load(path.join(origDir,  "class_"..c..".t7"))
+    nb_total = nb_total + #examples
+  end
+
+  local dataset = {}
+  dataset.data = torch.Tensor(nb_total, 3, 32, 32)
+  dataset.labels = torch.Tensor(nb_total)
+
+  local current_i = 1
+  for i_c, c in ipairs(classes) do
+    xlua.progress(i_c, 43)
     --open file and take the first *ex_per_class* examples
     local examples = torch.load(path.join(origDir,  "class_"..c..".t7"))
-    print(c, #examples)
     local nb = math.min(#examples, ex_per_class)
-    nb = math.max(nb, 0)
-    if nb == 0 then
-      nb = #table[examples]
-    end
     for i=1, nb do
-      local ex = {examples[i]}
-      if #ex == 0 then
-        print(i .. '/' .. nb)
-      end
-      dataset_[current_i] = {}
-      dataset_[current_i][1] = examples[i] 
-      dataset_[current_i][2] = c
+      dataset.data[{current_i, {}}]:copy(examples[i])
+      dataset.labels[current_i] = c
       current_i = current_i + 1 
     end
   end
-  shuffle(dataset_)
+  -- Shuffle the dataset
+  print('Shuffling the dataset')
+  shuffleTensors(dataset.data, dataset.labels)
 
-  -- Transform dataset into 2 tensors to be sliced
-  local dataset = {}
-  dataset.data = torch.Tensor(#dataset_, dataset_[1][1]:size(1),
-                                         dataset_[1][1]:size(2),
-                                         dataset_[1][1]:size(3))
-  dataset.labels = torch.Tensor(#dataset_)
-  for i, c in ipairs(dataset_) do
-    dataset.data[{i,{}}]:copy(c[1])
-    dataset.labels[i] = c[2]
-  end
 
   return dataset, nb_classes, ex_per_class
 end
