@@ -5,7 +5,7 @@ local lapp = require 'pl.lapp'
 local args = lapp [[
     Gets the data in the right format
     -s, --set (default "test")  Set to be processed
-    -e, --extraction  (default true) extraction from ppm files ?
+    -e, --extraction  (default false) extraction from ppm files ?
     -c, --creation (default true) creation of dataset from t7 files ?
     -d, --destination (string) target directory to write
     -a, --augment_factor (default 0) data augmentation factor
@@ -19,6 +19,10 @@ targets.test_orig = './test/GTSRB/Final_Test/Images'
 targets.train_dest = args.destination
 targets.test_dest = args.destination
 targets.meta_test = './gt/GT-final_test.csv'
+
+if args.extraction == 'false' then
+  args.extraction = false
+end
 
 local set = args.set
 print(targets)
