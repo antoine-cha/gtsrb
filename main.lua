@@ -28,8 +28,8 @@ local params = {
       learningRateDecay = args.lrdecay,
       weightDecay = args.weightdecay,
       momentum = args.momentum,
-      --dampening = 0,
-      --nesterov = 1,
+      dampening = 0,
+      nesterov = 1,
 }
 
 params.filename = path.join(params.modelDir, params.filename)
