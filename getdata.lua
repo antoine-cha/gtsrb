@@ -9,7 +9,6 @@ local args = lapp [[
     -c, --creation (default true) creation of dataset from t7 files ?
     -d, --destination (string) target directory to write
     -a, --augment_factor (default 0) data augmentation factor
-    -p, --preprocess (default true) preprocess the data
     --size (default 32) size of the image 
        ]]
 
@@ -46,13 +45,9 @@ if set == 'train'then
   if nb_examples==math.huge then
     nb_ex = 'all'
   end
-  local prep = 'prep'
-  if not args.preprocess then
-    prep = ''
-    data.preprocess(dataset)
-  end
+  print('Writing data to disk')
   torch.save('dataset-'.. nb_classes .. 'c-' .. nb_ex .. 'ex-' 
-             .. args.augment_factor .. 'fa-' .. prep ..'.t7', dataset)
+             .. args.augment_factor .. 'fa-.t7', dataset)
   end
 elseif set == 'test' then
   print('Setting up test data')
