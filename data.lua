@@ -96,16 +96,12 @@ local function imagesToTensorFiles(origDir, destDir, size, augment_factor, prep)
     -- Only check one level of recursion for now
 
     if root == origDir then
-      print(" Dirs :")
-      print(table.getn(dirs))
       if (table.getn(dirs) ~= 0) then
         for i,f in ipairs(dirs) do
           io.write(f .. ', ')
         end
         io.write('\n')
       end
-      print(" Files :")
-      print(table.getn(files))
       if (table.getn(files) ~= 0) then
         for i,f in ipairs(files) do
           io.write(f .. ', ')
@@ -121,7 +117,7 @@ local function imagesToTensorFiles(origDir, destDir, size, augment_factor, prep)
       local dataset = {}
       -- We need the classes to be 1-indexed
       local c = tonumber(class_) + 1
-      print("Extracting class " .. c)
+      io.write("Extracting class " .. c)
       -- the current index in the examples table
       local c_i = 1
 
@@ -149,7 +145,7 @@ local function imagesToTensorFiles(origDir, destDir, size, augment_factor, prep)
       end
       local filename = path.join(destDir, "class_"..c..".t7")
       torch.save(filename, dataset)
-      print(filename .. " saved")
+      io.write('   ' .. filename .. " saved \n")
     end
   end
   return dataset
