@@ -14,8 +14,8 @@ local args = lapp [[
     --retrain (default '') network to retrain
 ]]
 local params = {
-      orig_file = args.retrain,
-      dataPath = './dataset-43c-allex-2fa-prep.t7',
+      retrain = args.retrain,
+      dataPath = './dataset-43c-allex-3fa-prep.t7',
       modelDir = './models/',
       filename = args.model or 'model.t7',
       only2classes = false,
@@ -49,9 +49,9 @@ if path.exists(params.filename) then
 end
 
 local mlp_ = nn.Sequential()
-if params.orig_file ~= '' then
-  local network = torch.load(params.orig_file)
-  print('Using ' .. params.orig_file .. ' as starting network')
+if params.retrain ~= '' then
+  local network = torch.load(params.retrain)
+  print('Using ' .. params.retrain .. ' as starting network')
   mlp_:add(network)
   local params_file = ''
 else
