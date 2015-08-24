@@ -30,6 +30,25 @@ local function shuffle(t)
   return t
 end
 
+local function shuffleTensors(t, labels)
+  local n = t:size(1)
+  local swap_ex = torch.Tensor(t[{1,{}}]:size())
+  local swap_lab = 1
+  while n >= 2 do
+    --n is now the last pertinent index
+    local k = math.random(n) -- 1 <= k <= n
+    -- Quick swap
+    swap_ex:copy(t[{k,{}}])
+    t[{k, {}}]:copy(t[{n,{}}])
+    t[{n, {}}]:copy(swap_ex)
+    swap_lab = labels[k]
+    labels[k] = labels[n]
+    labels[n] = swap_lab
+    n = n - 1
+  end
+  return t
+end
+
 local function csvToTable(meta_file)
   -- Returns a table (dict) of the metadata indexed by filenames
   -----------------------------------------
