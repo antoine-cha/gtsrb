@@ -107,7 +107,6 @@ local function createMultiscaleNetwork()
   mlp:add(divnor1)
   mlp:add(max1)
   local y = mlp:forward(x)
-  print(y:size())
 
   -- Branching now
   -- Warning : Concat along 2nd axis for batch training !
@@ -126,7 +125,6 @@ local function createMultiscaleNetwork()
   way1:add(subnor2)
   way1:add(divnor2)
   way1:add(max2)
-  print(way1:forward(y):size())
 
   local conv3 = nn.SpatialConvolutionMM(units_2, units_3, 3, 3) 
   local subnor3 = nn.SpatialSubtractiveNormalization(units_3)
@@ -138,7 +136,6 @@ local function createMultiscaleNetwork()
   way1:add(subnor3)
   way1:add(divnor3)
   way1:add(max3)
-  print(way1:forward(y):size())
 
   -- 2nd branch : 1 conv
   local conv_ = nn.SpatialConvolutionMM(units_1, units_, 5, 5) 
@@ -151,7 +148,6 @@ local function createMultiscaleNetwork()
   way2:add(subnor_)
   way2:add(divnor_)
   way2:add(max_)
-  print(way2:forward(y):size())
 
   ways:add(way1)
   ways:add(way2)
@@ -168,8 +164,6 @@ local function createMultiscaleNetwork()
   mlp:add(nn.Linear(100, 43))
   mlp:add(nn.LogSoftMax())
  
-     
-  print(mlp:forward(x):size())
   return mlp
 end
 
