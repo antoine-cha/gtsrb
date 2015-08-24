@@ -56,7 +56,7 @@ function show_conf(network, dataset_file, batchSize, preprocess)
   end
 
   conf:updateValids()
-  io.write(('Test accuracy: '..'%.2f \n'):format(
+  io.write(('Test accuracy: '..'%.4f \n'):format(
             conf.totalValid * 100))
 end
 
