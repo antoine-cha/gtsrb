@@ -134,13 +134,27 @@ local function imagesToTensorFiles(origDir, destDir, size, augment_factor, prep)
           -- Data augmentation
           if augment_factor ~= 0 then
             for j=1,augment_factor do
-              local img_ = image.rotate(img, torch.uniform(-15,15)*math.pi/180)
+              img_ = image.rotate(img, torch.uniform(-15,15)*math.pi/180)
+              local tr_step_x = torch.uniform(-2, 2)
+              local tr_step_y = torch.uniform(-2, 2)
+              img_ = image.translate(img_, tr_step_x, tr_step_y)
+              local size_ = img_:size()
+              local sc_factor = torch.uniform(0, 0.4)
+              local border = {x=sc_factor*size_[2],
+                              y=sc_factor*size_[3]}
+              local start = {x=math.floor(math.max(border.x/2, 1)),
+                             y=math.floor(math.max(border.y/2, 1))}
+              local e = {y=math.floor(size_[2] - border.x/2),
+                           x=math.floor(size_[3] - border.y/2)}
+              img_ = image.crop(img_, start.x, start.y,
+                                      e.x, e.y)
               img_ = image.scale(img_, size..'x'..size)
               img_ = image.rgb2yuv(img_)
               dataset[c_i] = torch.Tensor(3, size, size):copy(img_)
               c_i = c_i + 1
             end
           end
+              local img_ = image.rgb2yuv(img_)
         end
       end
       local filename = path.join(destDir, "class_"..c..".t7")
