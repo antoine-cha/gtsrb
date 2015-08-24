@@ -276,6 +276,7 @@ local function trainNetwork(network, params)
     end
     if i % params.freq_save == 0 then 
       torch.save(params.filename, network)
+      torch.save(params.paramsFile, params)
       print('Model saved at ' .. params.filename)
     end
   end
