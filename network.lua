@@ -20,29 +20,36 @@ local function ParallelNetwork(nb_classes)
   local mlp = nn.Sequential()
   local map_3 = torch.Tensor(1*nfeats, 2):zero()
   for i=1,map_3:size(1) do
-    map_3[i][1] = 1
+    map_3[i][1] = 2
     map_3[i][2] = i
   end
   print(map_3)
-  print(nn.tables.full(3,4))
+  --print(nn.tables.full(3,4))
 
   local conv1 = nn.SpatialConvolutionMap(map_3, kW, kH)
   mlp:add(conv1)
   local x = torch.Tensor(nb, 3, kW, kH):zero()
-  print(mlp:forward(x))
+
   print('changing 1st channel-------------------')
-  x[{{}, 1, {}}]:fill(1)
-  print(x[1])
-  print(x[2])
-  print(mlp:forward(x))
+  x[{{}, 1, {}, {}}]:fill(1)
+  print(torch.all(torch.eq(x[1], x[2])))
+  local y = mlp:forward(x)
+  print(torch.all(torch.eq(y[1], y[2])))
+  print(y:reshape(nb,nfeats))
+
   print('changing 2nd channel----------------')
-  x[{{}, 2, {}}]:fill(1)
-  print(x)
-  print(mlp:forward(x))
+  x[{{}, 2, {}, {}}]:fill(1)
+  print(torch.all(torch.eq(x[1], x[2])))
+  y = mlp:forward(x)
+  print(y:reshape(nb,nfeats))
+  print(torch.all(torch.eq(y[1], y[2])))
+
   print('changing 3rd channel---------------------')
-  x[{ {}, 3, {}}]:fill(4)
-  print(x)
-  print(mlp:forward(x))
+  x[{ {}, 3, {}, {}}]:fill(4)
+  print(torch.all(torch.eq(x[1], x[2])))
+  y = mlp:forward(x)
+  print(y:reshape(nb,nfeats))
+  print(torch.all(torch.eq(y[1], y[2])))
   return mlp
 end
 
