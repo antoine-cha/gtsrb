@@ -91,16 +91,17 @@ local function createMultiscaleNetwork()
   -- Enables to test the output sizes
   local x = torch.Tensor(1,3,32,32)
 
-  local kW = 3; local kH=3;
   local units_1 = 108
-  local units_2 = 200
+  local units_2 = 108
   local units_3 = 108
-  local units_ = 108
+  local units_class_1 = 100
+  local units_class_2 = 50
+
   local mlp = nn.Sequential()
   -- 1st layer
-  local conv1 = nn.SpatialConvolutionMM(3, units_1, kW, kH)
+  local conv1 = nn.SpatialConvolutionMM(3, units_1, 3, 3)
   local divnor1 = nn.SpatialDivisiveNormalization(units_1)
-  local subnor1 = nn.SpatialSubtractiveNormalization(units_2)
+  local subnor1 = nn.SpatialSubtractiveNormalization(units_1)
   local max1 = nn.SpatialMaxPooling(2, 2, 2, 2)
   mlp:add(conv1)
   mlp:add(nn.ReLU())
@@ -126,44 +127,34 @@ local function createMultiscaleNetwork()
   way1:add(divnor2)
   way1:add(max2)
 
-  local conv3 = nn.SpatialConvolutionMM(units_2, units_3, 3, 3) 
-  local subnor3 = nn.SpatialSubtractiveNormalization(units_3)
-  local divnor3 = nn.SpatialDivisiveNormalization(units_3)
-  local max3 = nn.SpatialMaxPooling(2, 2, 2, 2)
+  local conv3 = nn.SpatialConvolutionMM(units_2, units_class_1/2, 6, 6) 
+  local subnor3 = nn.SpatialSubtractiveNormalization(units_class_1/2)
+  local divnor3 = nn.SpatialDivisiveNormalization(units_class_1/2)
   way1:add(conv3)
   way1:add(nn.Tanh())
   way1:add(nn.Abs())
-  way1:add(subnor3)
-  way1:add(divnor3)
-  way1:add(max3)
 
   -- 2nd branch : 1 conv
-  local conv_ = nn.SpatialConvolutionMM(units_1, units_, 5, 5) 
-  local subnor_ = nn.SpatialSubtractiveNormalization(units_)
-  local divnor_ = nn.SpatialDivisiveNormalization(units_)
-  local max_ = nn.SpatialMaxPooling(4, 4, 4, 4)
+  local max_1 = nn.SpatialMaxPooling(2, 2, 2, 2)
+  local conv_ = nn.SpatialConvolutionMM(units_1, units_class_1/2, 7, 7) 
+  local subnor_ = nn.SpatialSubtractiveNormalization(units_class_1/2)
+  local divnor_ = nn.SpatialDivisiveNormalization(units_class_1/2)
+  way2:add(max_1)
   way2:add(conv_)
   way2:add(nn.Tanh())
   way2:add(nn.Abs())
-  way2:add(subnor_)
-  way2:add(divnor_)
-  way2:add(max_)
 
   ways:add(way1)
   ways:add(way2)
   mlp:add(ways)
-  mlp:add(nn.Reshape((units_3 + units_) *4))
+  mlp:add(nn.Reshape(units_class_1))
 
   --Classifier
-  mlp:add(nn.Linear((units_3 + units_) *4, 100))
+  mlp:add(nn.Linear(units_class_1, units_class_2))
   way2:add(nn.Tanh())
   way2:add(nn.Abs())
-  mlp:add(nn.Linear(100, 100))
-  way2:add(nn.Tanh())
-  way2:add(nn.Abs())
-  mlp:add(nn.Linear(100, 43))
+  mlp:add(nn.Linear(units_class_2, 43))
   mlp:add(nn.LogSoftMax())
- 
   return mlp
 end
 
@@ -238,7 +229,6 @@ local function trainNetwork(network, params)
       inputs:cuda()
       targets:cuda()
     end
-
     local outputs = network:forward(inputs)
     --evaluate the loss function and its derivative wrt x,
     local loss_x = criterion:forward(outputs, targets)
