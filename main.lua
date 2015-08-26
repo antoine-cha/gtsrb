@@ -1,5 +1,6 @@
 --Custom imports
 local learn = require 'learn'
+local net = require 'network'
 local path = require 'pl.path'
 local dir = require 'pl.dir'
 
@@ -55,7 +56,7 @@ if params.retrain ~= '' then
   mlp_:add(network)
   local params_file = ''
 else
-  local network = learn.createMultiscaleNetwork() 
+  local network = net.MultiscaleNetwork() 
   mlp_:add(network)
 end
 
