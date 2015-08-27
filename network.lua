@@ -1,5 +1,5 @@
 require 'nn'
-require 'cunn'
+require 'cudnn'
 
 
 local function SimpleNetwork(nb_classes)
@@ -110,15 +110,16 @@ local function MultiscaleNetwork()
 
   local mlp = nn.Sequential()
   -- 1st layer
-  local conv1 = nn.SpatialConvolutionMM(3, units_1, 3, 3)
+  local conv1 = cudnn.SpatialConvolution(3, units_1, 3, 3)
   local divnor1 = nn.SpatialDivisiveNormalization(units_1)
   local subnor1 = nn.SpatialSubtractiveNormalization(units_1)
-  local max1 = nn.SpatialMaxPooling(2, 2, 2, 2)
+  local max1 = cudnn.SpatialMaxPooling(2, 2, 2, 2)
   mlp:add(conv1)
-  mlp:add(nn.ReLU())
+  mlp:add(nn.Tanh())
+  mlp:add(nn.Abs())
   mlp:add(divnor1)
   mlp:add(max1)
-  local y = mlp:forward(x)
+  --local y = mlp:forward(x)
 
   -- Branching now
   -- Warning : Concat along 2nd axis for batch training !
@@ -127,10 +128,10 @@ local function MultiscaleNetwork()
   local way2 = nn.Sequential()
 
   -- 1st branch with 2 layers of convolutions
-  local conv2 = nn.SpatialConvolutionMM(units_1, units_2, 3, 3)
+  local conv2 = cudnn.SpatialConvolution(units_1, units_2, 3, 3)
   local subnor2 = nn.SpatialSubtractiveNormalization(units_2)
   local divnor2 = nn.SpatialDivisiveNormalization(units_2)
-  local max2 = nn.SpatialMaxPooling(2, 2, 2, 2)
+  local max2 = cudnn.SpatialMaxPooling(2, 2, 2, 2)
   way1:add(conv2)
   way1:add(nn.Tanh())
   way1:add(nn.Abs())
@@ -138,7 +139,7 @@ local function MultiscaleNetwork()
   way1:add(divnor2)
   way1:add(max2)
 
-  local conv3 = nn.SpatialConvolutionMM(units_2, units_class_1/2, 6, 6) 
+  local conv3 = cudnn.SpatialConvolution(units_2, units_class_1/2, 6, 6) 
   local subnor3 = nn.SpatialSubtractiveNormalization(units_class_1/2)
   local divnor3 = nn.SpatialDivisiveNormalization(units_class_1/2)
   way1:add(conv3)
@@ -146,8 +147,8 @@ local function MultiscaleNetwork()
   way1:add(nn.Abs())
 
   -- 2nd branch : 1 conv
-  local max_1 = nn.SpatialMaxPooling(2, 2, 2, 2)
-  local conv_ = nn.SpatialConvolutionMM(units_1, units_class_1/2, 7, 7) 
+  local max_1 = cudnn.SpatialMaxPooling(2, 2, 2, 2)
+  local conv_ = cudnn.SpatialConvolution(units_1, units_class_1/2, 7, 7) 
   local subnor_ = nn.SpatialSubtractiveNormalization(units_class_1/2)
   local divnor_ = nn.SpatialDivisiveNormalization(units_class_1/2)
   way2:add(max_1)
